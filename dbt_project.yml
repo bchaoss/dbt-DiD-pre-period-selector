@@ -1,0 +1,45 @@
+name: 'pre_period_selector'
+version: '0.1.0'
+config-version: 2
+
+require-dbt-version: ">=1.3.0"
+
+models:
+  pre_period_selector:
+    +schema: pre_period_selector
+    int_pps_candidate_windows:
+      +materialized: table
+    int_pps_diff_correlations:
+      +materialized: table
+    int_pps_gap_slopes:
+      +materialized: table
+    int_pps_distance_scores:
+      +materialized: ephemeral
+    pps_recommendations:
+      +materialized: table
+
+vars:
+  # ---- Required ----
+  pps_metric_relation: null           # example: ref('your_daily_metric')
+  pps_post_start_date: null           # example: '2024-04-01'
+
+  # ---- Window parameters ----
+  pps_pre_window_days: 28
+  pps_slide_interval_days: 7
+  pps_num_candidates: 12              # number of candidate windows to generate
+  pps_gap_min_days: 7
+  pps_gap_max_days: 90
+
+  # ---- Scoring weights ----
+  pps_weight_correlation: 0.6
+  pps_weight_distance: 0.3
+  pps_weight_gap_stability: 0.1
+
+  # ---- Optimal gap range for distance penalty ----
+  pps_optimal_gap_min: 14
+  pps_optimal_gap_max: 45
+
+  # ---- Output and warning thresholds ----
+  pps_top_n: 3
+  pps_corr_warning_threshold: 0.85
+  pps_slope_warning_threshold: 0.05

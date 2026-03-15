@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: int_pps_candidate_windows
+    description: "Candidate pre-period windows after gap_days filtering"
+    columns:
+      - name: window_id
+        tests: [not_null, unique]
+      - name: pre_start
+        tests: [not_null]
+      - name: pre_end
+        tests: [not_null]
+      - name: gap_days
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: "var('pps_gap_min_days')"
+              max_value: "var('pps_gap_max_days')"
+
+  - name: int_pps_diff_correlations
+    description: "Differenced correlation coefficient for each candidate window"
+    columns:
+      - name: window_id
+        tests: [not_null, unique]
+      - name: diff_corr
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: -1.0
+              max_value: 1.0
+              inclusive: true
+
+  - name: pps_recommendations
+    description: |
+      Final top-N recommended pre-period windows.
+      Run before each experiment starts. Pick rank=1 where no flags are raised.
+    columns:
+      - name: recommendation_rank
+        tests: [not_null, unique]
+      - name: pre_start
+        tests: [not_null]
+      - name: composite_score
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0.0
+              max_value: 1.0
+    tests:
+      - assert_top_n_returned:   # self-defined generic test
+          n_col: recommendation_rank
+          expected_max: "var('pps_top_n')"
