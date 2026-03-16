@@ -1,12 +1,10 @@
 name: 'pre_period_selector_integration_tests'
 version: '0.1.0'
-
-packages:
-  - local: ../
+profile: 'pre_period_selector' 
 
 vars:
   pps_post_start_date: '2024-04-01'
-  pps_metric_relation: "ref('stg_pps_sample_metric')"
+  pps_metric_relation: 'stg_pps_sample_metric'
   pps_top_n: 3
   pps_weight_correlation: 0.6
   pps_weight_distance: 0.3
