@@ -1,5 +1,42 @@
 # dbt-did-pre-period-selector
 
+## What This Package Does
+
+Selecting a pre-period for difference-in-differences is typically done
+manually and subjectively. 
+
+This `dbt` package **automates the selection by scoring candidate
+historical windows** against three criteria in `SQL`: 
+- how closely treated and control co-move
+(differenced correlation);
+- how stable the gap between them is leading into the
+experiment (gap slope);
+- and how far the window sits from the post-period start
+(distance penalty).
+
+Given a metric table and an experiment start date, it returns the **top-N recommended
+pre-periods**, with ranked scores and quality flags for human review.
+
+## Design Philosophy
+
+The package aims the **window selection problem** for pre-period in DiD, instead of pre-trends hypothesis testing problem.
+
+The treated and control groups are assumed and already defined by the
+analyst, for examples: YoY
+comparisons, matched markets, or synthetic controls. 
+
+The question being answered is: *given these two series, which historical
+window provides the most stable and parallel baseline?*
+
+This is distinct from the pre-trends testing critique in Roth (2022), which applies
+to settings where a test result determines whether analysis proceeds. Here, a window
+is always selected. The package finds the best available one and flags its
+weaknesses transparently.
+
+For the full theoretical references and known limitations, see [background.md](background.md).
+
+## Structure
+
 <pre>
 dbt_did_pre_period_selector/
 ├── dbt_project.yml
@@ -129,3 +166,4 @@ FROM {{ ref('your_source') }}
 
 The choice of aggregation method is left to the analyst and depends on the
 relative size and relevance of each control group.
+
