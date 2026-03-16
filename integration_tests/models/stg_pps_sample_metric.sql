@@ -4,5 +4,6 @@ SELECT
     date   AS date,
     treated_value   AS treated_value,
     control_value   AS control_value,
-    is_holiday
+    is_holiday,
+    false AS is_event
 FROM {{ ref('pps_sample_daily_metric') }}

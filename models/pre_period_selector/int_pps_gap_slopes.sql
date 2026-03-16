@@ -21,7 +21,7 @@ gap_series AS (
   JOIN source d
     ON d.date BETWEEN w.pre_end
                   AND {{ dbt.dateadd('day', '-1', "CAST('" ~ post_start ~ "' AS DATE)") }}
-  WHERE d.is_holiday = false
+  WHERE d.is_holiday = false AND d.is_event = false
 )
 SELECT
   window_id,
