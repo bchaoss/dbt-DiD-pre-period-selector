@@ -1,3 +1,5 @@
+# Integration Tests
+
 ## Local Development
 
 Prerequisites: Docker Desktop, VS Code with Dev Containers extension.
@@ -18,6 +20,20 @@ dbt build
 
 # Inspect recommendations
 dbt show --select pps_recommendations --output json
+```
+
+### Validation Tests
+
+Verify flags and guardrails are working:
+```bash
+# Should fail at compile time: weights do not sum to 1.0
+dbt build --vars '{"pps_weight_correlation": 0.8, "pps_weight_distance": 0.3, "pps_weight_gap_stability": 0.1}'
+
+# Should return more rows if enough candidates pass the gap filter
+dbt build --vars '{"pps_top_n": 5}'
+
+# Should trigger flag_low_correlation on all rows
+dbt build --vars '{"pps_corr_warning_threshold": 0.999}'
 ```
 
 ## Regenerating Seed Data
