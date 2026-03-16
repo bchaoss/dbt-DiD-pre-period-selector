@@ -5,7 +5,7 @@
   )
 }}
 
-{%- set metric_rel = var('pps_metric_relation') -%}
+{%- set metric_rel = ref(var('pps_metric_relation')) -%}
 {%- if metric_rel is none -%}
   {{ exceptions.raise_compiler_error("pps_metric_relation is not set. Specify it in vars: pps_metric_relation: ref('your_staging_model')") }}
 {%- endif -%}

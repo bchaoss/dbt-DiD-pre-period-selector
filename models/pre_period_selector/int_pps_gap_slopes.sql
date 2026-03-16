@@ -8,7 +8,7 @@
 {%- set post_start = var('pps_post_start_date') -%}
 
 WITH source AS (
-  SELECT * FROM {{ var('pps_metric_relation') }}
+  SELECT * FROM {{ ref(var('pps_metric_relation')) }}
 ),
 gap_series AS (
   SELECT
@@ -20,7 +20,7 @@ gap_series AS (
   FROM {{ ref('int_pps_candidate_windows') }} w
   JOIN source d
     ON d.date BETWEEN w.pre_end
-                  AND {{ dbt.dateadd('day', '-1', "'" ~ post_start ~ "'") }}
+                  AND {{ dbt.dateadd('day', '-1', "CAST('" ~ post_start ~ "' AS DATE)") }}
   WHERE d.is_holiday = false
 )
 SELECT
