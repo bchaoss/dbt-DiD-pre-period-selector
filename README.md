@@ -76,7 +76,7 @@ packages:
     revision: 0.1.0
 ```
 
-Then run:
+and run:
 
 ```bash
 dbt deps
@@ -92,14 +92,31 @@ vars:
   pps_metric_relation: 'stg_my_experiment_metric'
 ```
 
-The required staging model must expose these columns:
+### Staging model interface
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `date` | date | One row per day |
-| `treated_value` | numeric | Metric for the treated group |
-| `control_value` | numeric | Metric for the control group |
-| `is_holiday` | boolean | Days to exclude from scoring |
+The package expects a staging model with these columns:
+
+| Column | Type | Required | Description |
+|--------|------|----------|-------------|
+| `date` | date | ✓ | One row per day |
+| `treated_value` | numeric | ✓ | Metric for the treated group |
+| `control_value` | numeric | ✓ | Metric for the control group |
+| `is_holiday` | boolean | ✓ | Set to `false` if not applicable |
+| `is_event` | boolean | ✓ | Set to `false` if not applicable |
+
+Minimal example:
+```sql
+-- stg_my_experiment_metric.sql
+SELECT
+    date             AS date,
+    metric_treated   AS treated_value,
+    metric_control   AS control_value,
+    false,           AS is_holiday,
+    false            AS is_event
+FROM {{ ref('your_source') }}
+```
+
+### Running the package
 
 Then run:
 
@@ -116,6 +133,22 @@ SELECT * FROM pps_recommendations ORDER BY recommendation_rank;
 
 Pick the highest rank with no flags raised. 
 
+### Multiple Control Groups
+
+If have more than one control group, aggregate them in the staging model
+before passing to the package. The package expects a single `control_value` column.
+
+For example:
+```sql
+-- stg_my_experiment_metric.sql
+SELECT
+    date,
+    treated_value,
+    (control_a + control_b + control_c) / 3.0 AS control_value,
+    is_holiday
+FROM {{ ref('your_source') }}
+```
+
 ## Configuration
 
 All variables have defaults and can be overridden in `dbt_project.yml`:
@@ -129,41 +162,11 @@ All variables have defaults and can be overridden in `dbt_project.yml`:
 | `pps_gap_max_days` | 90 | Maximum days between pre-period end and post-period start |
 | `pps_optimal_gap_min` | 14 | Lower bound of optimal gap range for distance scoring |
 | `pps_optimal_gap_max` | 45 | Upper bound of optimal gap range for distance scoring |
-| `pps_weight_correlation` | 0.6 | Weight for differenced correlation score |
-| `pps_weight_distance` | 0.3 | Weight for distance penalty score |
-| `pps_weight_gap_stability` | 0.1 | Weight for gap stability score |
+| `pps_weight_correlation` | 0.6 | Weight for differenced correlation score* |
+| `pps_weight_distance` | 0.3 | Weight for distance penalty score* |
+| `pps_weight_gap_stability` | 0.1 | Weight for gap stability score* |
 | `pps_top_n` | 3 | Number of recommendations to return |
 | `pps_corr_warning_threshold` | 0.85 | Correlation below this triggers `flag_low_correlation` |
 | `pps_slope_warning_threshold` | 0.05 | Slope above this triggers `flag_unstable_gap` |
 
-Weights must sum to 1.0 — enforced at compile time.
-
-## Multiple Control Groups
-
-If you have more than one control group, aggregate them in your staging model
-before passing to the package. The package expects a single `control_value` column.
-
-For example, averaging across controls:
-```sql
--- stg_my_experiment_metric.sql
-SELECT
-    date,
-    treated_value,
-    (control_a + control_b + control_c) / 3.0 AS control_value,
-    is_holiday
-FROM {{ ref('your_source') }}
-```
-
-Or using a weighted average:
-```sql
-SELECT
-    date,
-    treated_value,
-    (0.5 * control_a + 0.3 * control_b + 0.2 * control_c) AS control_value,
-    is_holiday
-FROM {{ ref('your_source') }}
-```
-
-The choice of aggregation method is left to the analyst and depends on the
-relative size and relevance of each control group.
-
+*Weights must sum to 1.0 — enforced at compile time.
