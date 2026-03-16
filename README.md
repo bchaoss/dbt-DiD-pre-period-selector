@@ -52,7 +52,7 @@ Set the two required variables in `dbt_project.yml`:
 ```yaml
 vars:
   pps_post_start_date: '2024-06-01'
-  pps_metric_relation: "ref('stg_my_experiment_metric')"
+  pps_metric_relation: 'stg_my_experiment_metric'
 ```
 
 The required staging model must expose these columns:
