@@ -4,10 +4,6 @@ config-version: 2
 
 require-dbt-version: ">=1.3.0"
 
-packages:
-  - package: dbt-labs/dbt_utils
-    version: [">=1.0.0", "<2.0.0"]
-    
 models:
   pre_period_selector:
     +schema: pre_period_selector
