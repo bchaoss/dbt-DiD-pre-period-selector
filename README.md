@@ -100,3 +100,32 @@ All variables have defaults and can be overridden in `dbt_project.yml`:
 | `pps_slope_warning_threshold` | 0.05 | Slope above this triggers `flag_unstable_gap` |
 
 Weights must sum to 1.0 — enforced at compile time.
+
+## Multiple Control Groups
+
+If you have more than one control group, aggregate them in your staging model
+before passing to the package. The package expects a single `control_value` column.
+
+For example, averaging across controls:
+```sql
+-- stg_my_experiment_metric.sql
+SELECT
+    date,
+    treated_value,
+    (control_a + control_b + control_c) / 3.0 AS control_value,
+    is_holiday
+FROM {{ ref('your_source') }}
+```
+
+Or using a weighted average:
+```sql
+SELECT
+    date,
+    treated_value,
+    (0.5 * control_a + 0.3 * control_b + 0.2 * control_c) AS control_value,
+    is_holiday
+FROM {{ ref('your_source') }}
+```
+
+The choice of aggregation method is left to the analyst and depends on the
+relative size and relevance of each control group.
