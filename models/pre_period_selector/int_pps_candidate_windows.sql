@@ -20,12 +20,12 @@ windows AS (
     {{ dbt.dateadd(
         'day',
         '-(offset_index * ' ~ var('pps_slide_interval_days') ~ ' + ' ~ var('pps_pre_window_days') ~ ')',
-        "'" ~ post_start ~ "'"
+        "CAST('" ~ post_start ~ "' AS DATE)"
     ) }}                                                     AS pre_start,
     {{ dbt.dateadd(
         'day',
         '-(offset_index * ' ~ var('pps_slide_interval_days') ~ ' + 1)',
-        "'" ~ post_start ~ "'"
+        "CAST('" ~ post_start ~ "' AS DATE)"
     ) }}                                                     AS pre_end
   FROM offsets
 )
@@ -33,7 +33,7 @@ SELECT
   window_id,
   pre_start,
   pre_end,
-  {{ dbt.datediff('pre_end', "'" ~ post_start ~ "'", 'day') }} AS gap_days
+  {{ dbt.datediff('pre_end', "CAST('" ~ post_start ~ "' AS DATE)", 'day') }} AS gap_days
 FROM windows
-WHERE {{ dbt.datediff('pre_end', "'" ~ post_start ~ "'", 'day') }}
+WHERE {{ dbt.datediff('pre_end', "CAST('" ~ post_start ~ "' AS DATE)", 'day') }}
       BETWEEN {{ var('pps_gap_min_days') }} AND {{ var('pps_gap_max_days') }}
