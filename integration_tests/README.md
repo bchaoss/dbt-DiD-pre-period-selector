@@ -51,3 +51,16 @@ dbt build
 - `flag_low_correlation` null
 - `flag_unstable_gap` null
 - `recommendation_rank` 1 has `gap_days` within 14–45
+
+### Visualize Output
+
+```bash
+# After dbt build, export results for examples
+psql -h postgres -U dbt -d dbt_test \
+  -c "\COPY pps_dev_pre_period_selector.pps_recommendations TO '../examples/data/pps_recommendations.csv' CSV HEADER"
+
+psql -h postgres -U dbt -d dbt_test \
+  -c "\COPY pps_dev.pps_sample_daily_metric TO '../examples/data/pps_sample_daily_metric.csv' CSV HEADER"
+```
+
+Then run `show_pre_period_recommendations.ipynb`.
