@@ -157,7 +157,6 @@ All variables have defaults and can be overridden in `dbt_project.yml`:
 |----------|---------|-------------|
 | `pps_pre_window_days` | 28 | Length of each candidate pre-period |
 | `pps_slide_interval_days` | 7 | Step size when sliding the window |
-| `pps_num_candidates` | 12 | Number of candidate windows to generate |
 | `pps_gap_min_days` | 7 | Minimum days between pre-period end and post-period start |
 | `pps_gap_max_days` | 90 | Maximum days between pre-period end and post-period start |
 | `pps_optimal_gap_min` | 14 | Lower bound of optimal gap range for distance scoring |
