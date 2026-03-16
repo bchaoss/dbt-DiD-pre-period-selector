@@ -1,4 +1,4 @@
-# did-pre-period-selector
+# dbt-did-pre-period-selector
 
 <pre>
 dbt_did_pre_period_selector/
@@ -31,11 +31,11 @@ dbt_did_pre_period_selector/
 
 ## Installation
 
-Add to  `packages.yml`:
+In dbt `packages.yml`, add:
 
 ```yaml
 packages:
-  - git: "https://github.com/xxx/did_pre_period_selector"
+  - git: "https://github.com/bchaoss/dbt-did-pre-period-selector"
     revision: 0.1.0
 ```
 
