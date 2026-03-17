@@ -1,4 +1,4 @@
-name: 'pre_period_selector'
+name: 'dbt_pre_period_selector'
 version: '0.1.0'
 config-version: 2
 
