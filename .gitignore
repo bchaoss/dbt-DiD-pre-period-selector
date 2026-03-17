@@ -1,0 +1,15 @@
+.devcontainer/profiles.yml
+.devcontainer/.user.yml
+package-lock.yml
+
+logs/
+target/
+dbt_packages/
+
+examples/data/*.csv
+examples/*.png
+
+
+__pycache__/
+*.pyc
+.env

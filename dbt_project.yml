@@ -26,7 +26,6 @@ vars:
   # ---- Window parameters ----
   pps_pre_window_days: 28
   pps_slide_interval_days: 7
-  pps_num_candidates: 12              # number of candidate windows to generate
   pps_gap_min_days: 7
   pps_gap_max_days: 90
 

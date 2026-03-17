@@ -5,7 +5,7 @@
   )
 }}
 
-{%- set metric_rel = var('pps_metric_relation') -%}
+{%- set metric_rel = ref(var('pps_metric_relation')) -%}
 {%- if metric_rel is none -%}
   {{ exceptions.raise_compiler_error("pps_metric_relation is not set. Specify it in vars: pps_metric_relation: ref('your_staging_model')") }}
 {%- endif -%}
@@ -17,13 +17,16 @@ diffs AS (
   SELECT
     date,
     is_holiday,
+    is_event,
     treated_value - LAG(treated_value) OVER (ORDER BY date) AS treated_diff,
     control_value - LAG(control_value) OVER (ORDER BY date) AS control_diff
   FROM source
 ),
 clean_diffs AS (
   SELECT * FROM diffs
-  WHERE is_holiday = false
+  WHERE 1=1
+    AND is_holiday = false
+    AND is_event = false
     AND treated_diff IS NOT NULL
     AND control_diff IS NOT NULL
 ),
