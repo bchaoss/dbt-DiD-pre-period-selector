@@ -1,10 +1,9 @@
-# dbt-did-pre-period-selector
+# dbt-DiD-Pre-Period-Selector
 
 ## What This Package Does
 
-Selecting a pre-period for difference-in-differences is typically done
+Selecting a pre-period for Difference-in-Differences (DiD) is typically done
 manually and subjectively. 
-
 This `dbt` package **automates the selection by scoring candidate
 historical windows** against three criteria in `SQL`: 
 - how closely treated and control co-move
@@ -14,7 +13,7 @@ experiment (gap slope);
 - and how far the window sits from the post-period start
 (distance penalty).
 
-Given a metric table and an experiment start date, it returns the **top-N recommended
+Given a *metric table* and an *experiment start date*, it returns the **top-N recommended
 pre-periods**, with ranked scores and quality flags for human review.
 
 ## Design Philosophy
