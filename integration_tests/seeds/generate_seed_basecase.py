@@ -34,9 +34,9 @@ while d <= end:
     common = trend + seasonal
 
     # treated tracks common + small independent noise
-    treated = 1000 + common + random.gauss(0, 2)
+    treated = 1000 + common + random.gauss(0, 8)
     # control tracks common with slight lag offset + own noise
-    control = 950 + common * 0.97 + random.gauss(0, 2.5)
+    control = 950 + common * 0.97 + random.gauss(0, 10)
 
     is_holiday = "true" if d in holidays else "false"
 
@@ -55,9 +55,3 @@ with open("/workspace/integration_tests/seeds/pps_sample_daily_metric.csv", "w",
     writer.writerows(rows)
 
 print(f"Rows: {len(rows)}")
-# print("First 5:")
-# for r in rows[:5]:
-#     print(r)
-# print("Last 5:")
-# for r in rows[-5:]:
-#     print(r)
