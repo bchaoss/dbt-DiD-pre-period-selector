@@ -22,26 +22,10 @@ dbt build
 dbt show --select pps_recommendations --output json
 ```
 
-### Validation Tests
-
-Verify flags and guardrails are working:
-```bash
-# Should fail at compile time: weights do not sum to 1.0
-dbt build --vars '{"pps_weight_correlation": 0.8, "pps_weight_distance": 0.3, "pps_weight_gap_stability": 0.1}'
-
-# Should return more rows if enough candidates pass the gap filter
-dbt build --vars '{"pps_top_n": 5}'
-
-# Should trigger flag_low_correlation on all rows
-dbt build --vars '{"pps_corr_warning_threshold": 0.999}'
-```
-
-## Regenerating Seed Data
+Or
 
 ```bash
-python seeds/generate_seed.py
-dbt seed --full-refresh
-dbt build
+bash test.sh
 ```
 
 ## Expected Output
@@ -51,6 +35,30 @@ dbt build
 - `flag_low_correlation` null
 - `flag_unstable_gap` null
 - `recommendation_rank` 1 has `gap_days` within 14–45
+
+### Validation Tests
+
+Verify flags and guardrails are working:
+```bash
+# Should fail at compile time: weights do not sum to 1.0
+dbt build --vars '{"pps_weight_correlation": 0.8, "pps_weight_distance": 0.3, "pps_weight_gap_stability": 0.1}'
+
+# Should return more rows if enough candidates pass the gap filter
+dbt build --vars '{"pps_top_n": 5}'
+dbt show --select pps_recommendations --output json
+
+# Should trigger flag_low_correlation on all rows
+dbt build --vars '{"pps_corr_warning_threshold": 0.999}'
+dbt show --select pps_recommendations --output json
+```
+
+## Regenerating Seed Data
+
+```bash
+python seeds/generate_seed.py
+dbt seed --full-refresh
+dbt build
+```
 
 ### Visualize Output
 
