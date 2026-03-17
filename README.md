@@ -150,6 +150,10 @@ FROM {{ ref('your_source') }}
 
 ## Configuration
 
+**Compatibility**: Tested on Postgres. Compatible with Snowflake, BigQuery, Redshift, and DuckDB
+via dbt's cross-database macros (`dbt.dateadd`, `dbt.datediff`).
+
+
 All variables have defaults and can be overridden in `dbt_project.yml`:
 
 | Variable | Default | Description |
