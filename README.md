@@ -5,7 +5,7 @@
 Selecting a pre-treatment period for Difference-in-Differences (DiD) is typically done
 manually. 
 This `dbt` package **automates the selection by scoring candidate
-historical windows** against three criteria in `SQL`: 
+historical windows** against three criteria in SQL: 
 - how closely treated and control co-move
 (differenced correlation);
 - how stable the gap between them is leading into the
@@ -34,40 +34,12 @@ weaknesses transparently.
 
 For the full theoretical references and known limitations, see [background.md](background.md).
 
-## Structure
-
-<pre>
-dbt_did_pre_period_selector/
-├── dbt_project.yml
-├── README.md
-├── macros/
-│   ├── pps_generate_window_offsets.sql   
-│   ├── pps_linear_slope.sql              
-│   └── pps_distance_penalty.sql          
-├── models/
-│   └── pre_period_selector/
-│       ├── schema.yml
-│       ├── int_pps_candidate_windows.sql
-│       ├── int_pps_diff_correlations.sql
-│       ├── int_pps_gap_slopes.sql
-│       ├── int_pps_distance_scores.sql
-│       └── pps_recommendations.sql        
-├── tests/
-│   └── generic/
-│       ├── assert_weights_sum_to_one.sql
-│       └── assert_top_n_returned.sql
-└── integration_tests/
-    ├── dbt_project.yml
-    ├── seeds/
-    │   └── pps_sample_daily_metric.csv
-    └── models/
-        └── stg_pps_sample_metric.sql
-</pre>
-
 
 ## Installation
 
-In dbt `packages.yml`, add:
+dbt version required: `>=1.3.0, <2.0.0`
+
+Include the following in dbt `packages.yml` file:
 
 ```yaml
 packages:
@@ -75,11 +47,9 @@ packages:
     revision: 0.1.0
 ```
 
-and run:
+Run `dbt deps` to install the package.
 
-```bash
-dbt deps
-```
+
 
 ## Usage
 
@@ -87,8 +57,8 @@ Set the two required variables in `dbt_project.yml`:
 
 ```yaml
 vars:
-  pps_post_start_date: '2024-06-01'
-  pps_metric_relation: 'stg_my_experiment_metric'
+  pps_post_start_date: '2024-06-01'                # experiment start date
+  pps_metric_relation: 'stg_my_experiment_metric'  # input model name
 ```
 
 ### Staging model interface
@@ -147,6 +117,38 @@ SELECT
     is_holiday
 FROM {{ ref('your_source') }}
 ```
+
+
+## Structure
+
+<pre>
+dbt_did_pre_period_selector/
+├── dbt_project.yml
+├── README.md
+├── macros/
+│   ├── pps_generate_window_offsets.sql   
+│   ├── pps_linear_slope.sql              
+│   └── pps_distance_penalty.sql          
+├── models/
+│   └── pre_period_selector/
+│       ├── schema.yml
+│       ├── int_pps_candidate_windows.sql
+│       ├── int_pps_diff_correlations.sql
+│       ├── int_pps_gap_slopes.sql
+│       ├── int_pps_distance_scores.sql
+│       └── pps_recommendations.sql        
+├── tests/
+│   └── generic/
+│       ├── assert_weights_sum_to_one.sql
+│       └── assert_top_n_returned.sql
+└── integration_tests/
+    ├── dbt_project.yml
+    ├── seeds/
+    │   └── pps_sample_daily_metric.csv
+    └── models/
+        └── stg_pps_sample_metric.sql
+</pre>
+
 
 ## Configuration
 
