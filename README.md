@@ -2,8 +2,8 @@
 
 ## What This Package Does
 
-Selecting a pre-period for Difference-in-Differences (DiD) is typically done
-manually and subjectively. 
+Selecting a pre-treatment period for Difference-in-Differences (DiD) is typically done
+manually. 
 This `dbt` package **automates the selection by scoring candidate
 historical windows** against three criteria in `SQL`: 
 - how closely treated and control co-move
@@ -14,11 +14,11 @@ experiment (gap slope);
 (distance penalty).
 
 Given a *metric table* and an *experiment start date*, it returns the **top-N recommended
-pre-periods**, with ranked scores and quality flags for human review.
+pre-treatment periods**, with ranked scores and quality flags for human review.
 
 ## Design Philosophy
 
-The package aims the **window selection problem** for pre-period in DiD, instead of pre-trends hypothesis testing problem.
+The package aims the **window selection problem** for pre-treatment period in DiD, instead of pre-trends hypothesis testing problem.
 
 The treated and control groups are assumed and already defined by the
 analyst, for examples: YoY
