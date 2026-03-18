@@ -43,12 +43,21 @@ Include the following in dbt `packages.yml` file:
 
 ```yaml
 packages:
+  - package: bchaoss/dbt-did-pre-period-selector
+    revision: 0.1.0
+```
+
+Or
+
+```yaml
+packages:
   - git: "https://github.com/bchaoss/dbt-did-pre-period-selector"
     revision: 0.1.0
 ```
 
 Run `dbt deps` to install the package.
 
+For more information on using packages in your dbt project, check out the [dbt Documentation](https://docs.getdbt.com/docs/package-management).
 
 
 ## Usage
@@ -61,7 +70,7 @@ vars:
   pps_metric_relation: 'stg_my_experiment_metric'  # input model name
 ```
 
-### Staging model interface
+### Input model interface
 
 The package expects a staging model with these columns:
 
@@ -73,7 +82,7 @@ The package expects a staging model with these columns:
 | `is_holiday` | boolean | ✓ | Set to `false` if not applicable |
 | `is_event` | boolean | ✓ | Set to `false` if not applicable |
 
-Minimal example:
+#### Minimal example:
 ```sql
 -- stg_my_experiment_metric.sql
 SELECT
@@ -84,6 +93,12 @@ SELECT
     false            AS is_event
 FROM {{ ref('your_source') }}
 ```
+
+#### Multiple Control Groups
+
+If have more than one control group, aggregate them in the staging model
+before passing to the package. The package expects a single `control_value` column.
+
 
 ### Running the package
 
@@ -100,23 +115,7 @@ Query the output:
 SELECT * FROM pps_recommendations ORDER BY recommendation_rank;
 ```
 
-Pick the highest rank with no flags raised. 
-
-### Multiple Control Groups
-
-If have more than one control group, aggregate them in the staging model
-before passing to the package. The package expects a single `control_value` column.
-
-For example:
-```sql
--- stg_my_experiment_metric.sql
-SELECT
-    date,
-    treated_value,
-    (control_a + control_b + control_c) / 3.0 AS control_value,
-    is_holiday
-FROM {{ ref('your_source') }}
-```
+Pick the highest rank with no flags raised for further review (visual check, placebo test, etc.). 
 
 
 ## Structure
@@ -126,6 +125,7 @@ dbt_did_pre_period_selector/
 ├── dbt_project.yml
 ├── README.md
 ├── macros/
+│   ├── pps_assert_weights_sum_to_one.sql
 │   ├── pps_generate_window_offsets.sql   
 │   ├── pps_linear_slope.sql              
 │   └── pps_distance_penalty.sql          
@@ -139,7 +139,6 @@ dbt_did_pre_period_selector/
 │       └── pps_recommendations.sql        
 ├── tests/
 │   └── generic/
-│       ├── assert_weights_sum_to_one.sql
 │       └── assert_top_n_returned.sql
 └── integration_tests/
     ├── dbt_project.yml
