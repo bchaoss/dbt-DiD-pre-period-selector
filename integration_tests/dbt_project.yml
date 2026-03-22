@@ -9,3 +9,6 @@ vars:
   pps_weight_correlation: 0.6
   pps_weight_distance: 0.3
   pps_weight_gap_stability: 0.1
+
+flags:
+  require_ref_prefers_node_package_to_root: true
