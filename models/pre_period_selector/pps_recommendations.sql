@@ -25,7 +25,7 @@ WITH scored AS (
     + {{ var('pps_weight_distance') }}   * {{ pps_distance_penalty('c.gap_days') }}
     + {{ var('pps_weight_gap_stability') }}
       * GREATEST(0.0, 1.0 - ABS(slope.gap_slope) / {{ var('pps_slope_warning_threshold') }})
-        )                                           AS composite_score
+    AS composite_score
 
   FROM {{ ref('int_pps_candidate_windows') }}  c
   LEFT JOIN {{ ref('int_pps_diff_correlations') }} corr USING (window_id)
@@ -44,7 +44,7 @@ ranked AS (
     CASE WHEN obs_count < 14
          THEN true END                              AS flag_low_obs_count
   FROM scored
-  WHERE diff_corr IS NOT NULL
+  WHERE diff_corr > {{ var('pps_corr_min_threshold') }}
 )
 SELECT
   recommendation_rank,

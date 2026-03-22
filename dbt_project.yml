@@ -41,4 +41,5 @@ vars:
   # ---- Output and warning thresholds ----
   pps_top_n: 3
   pps_corr_warning_threshold: 0.85
+  pps_corr_min_threshold: 0.0
   pps_slope_warning_threshold: 0.05

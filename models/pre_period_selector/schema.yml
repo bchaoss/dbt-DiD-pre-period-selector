@@ -44,6 +44,12 @@ models:
           - dbt_utils.accepted_range:
               min_value: 0.0
               max_value: 1.0
+          - dbt_utils.expression_is_true:
+              expression: "count(*) > 0"
+              error_message: >
+                No candidate windows passed pps_corr_min_threshold.
+                Consider lowering pps_corr_min_threshold or reviewing
+                your treated/control pairing.            
     tests:
       - assert_top_n_returned:   # self-defined generic test
           n_col: recommendation_rank
