@@ -1,4 +1,4 @@
--- Example staging model showing the expected interface for pps_metric_relation
+-- Example staging model showing the expected interface for pps_metric_model
 -- Required columns: date, treated_value, control_value, is_holiday
 SELECT
     date   AS date,

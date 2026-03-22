@@ -20,8 +20,8 @@ models:
 
 vars:
   # ---- Required ----
-  pps_metric_relation: null           # example: ref('your_daily_metric')
-  pps_post_start_date: null           # example: '2024-04-01'
+  pps_metric_model: null           # example: ref('your_daily_metric')
+  pps_post_start_date: null        # example: '2024-04-01'
 
   # ---- Window parameters ----
   pps_pre_window_days: 28
