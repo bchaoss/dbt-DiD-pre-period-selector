@@ -28,6 +28,7 @@ vars:
   pps_slide_interval_days: 7
   pps_gap_min_days: 7
   pps_gap_max_days: 90
+  pps_max_candidates: 50
 
   # ---- Scoring parameters ----
   pps_diff_lag: 1                  # set to 7 when eliminate weekly seasonality
