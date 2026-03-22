@@ -24,7 +24,7 @@ WITH scored AS (
     {{ var('pps_weight_correlation') }}  * COALESCE(corr.diff_corr, 0)
     + {{ var('pps_weight_distance') }}   * {{ pps_distance_penalty('c.gap_days') }}
     + {{ var('pps_weight_gap_stability') }}
-      * GREATEST(0.0, 1.0 - ABS(slope.gap_slope) / {{ var('pps_slope_warning_threshold') }})
+      * GREATEST(0.0, 1.0 - (ABS(slope.gap_slope) / {{ var('pps_slope_warning_threshold') }}))
     AS composite_score
 
   FROM {{ ref('int_pps_candidate_windows') }}  c
