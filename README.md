@@ -32,7 +32,7 @@ to settings where a test result determines whether analysis proceeds. Here, a wi
 is always selected. The package finds the best available one and flags its
 weaknesses transparently.
 
-For the full theoretical references and known limitations, see [background.md](background.md).
+For the full theoretical references and known limitations, see [DESIGN.md](DESIGN.md).
 
 ## Structure
 
