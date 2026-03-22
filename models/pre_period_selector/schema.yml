@@ -43,6 +43,12 @@ models:
           - accepted_values:
               arguments:
                 values: [true, false]
+    tests:
+      - assert_no_date_gaps:
+          name: metric_input_has_missing_dates_scoring_may_be_affected
+          date_col: date
+          config:
+            severity: warn
 
   - name: int_pps_diff_correlations
     description: >
