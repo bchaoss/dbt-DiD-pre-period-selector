@@ -32,6 +32,7 @@ Output
     seeds/pps_sample_daily_metric.csv
 """
 
+import re
 import csv
 import math
 import random
@@ -126,3 +127,17 @@ print(
 print(f"\nSet in integration_tests/dbt_project.yml:")
 print(f"  pps_post_start_date: '{post_start_date}'")
 print(f"  pps_corr_warning_threshold: 0.7")
+
+
+# ------- auto-sync pps_post_start_date in dbt_project.yml --------------
+
+yml_path = Path(__file__).parent.parent / "dbt_project.yml"
+yml = yml_path.read_text()
+yml = re.sub(
+    r"pps_post_start_date: '.*'",
+    f"pps_post_start_date: '{post_start_date}'",
+    yml
+)
+yml_path.write_text(yml)
+print(
+    f"Updated dbt_project.yml: pps_post_start_date set to '{post_start_date}'")
