@@ -13,8 +13,8 @@ diffs AS (
     date,
     is_holiday,
     is_event,
-    treated_value - LAG(treated_value) OVER (ORDER BY date) AS treated_diff,
-    control_value - LAG(control_value) OVER (ORDER BY date) AS control_diff
+    treated_value - LAG(treated_value, {{ var('pps_diff_lag') }}) OVER (ORDER BY date) AS treated_diff,
+    control_value - LAG(control_value, {{ var('pps_diff_lag') }}) OVER (ORDER BY date) AS control_diff
   FROM source
 ),
 clean_diffs AS (
