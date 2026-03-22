@@ -8,7 +8,7 @@
 {%- set post_start = var('pps_post_start_date') -%}
 
 WITH source AS (
-  SELECT * FROM {{ ref(var('pps_metric_relation')) }}
+  SELECT * FROM {{ ref('int_pps_input_metric') }}
 ),
 gap_series AS (
   SELECT
