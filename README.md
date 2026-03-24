@@ -34,51 +34,14 @@ weaknesses transparently.
 
 For the full theoretical references and known limitations, see [DESIGN.md](DESIGN.md).
 
-## Structure
-
-<pre>
-dbt_did_pre_period_selector/
-├── dbt_project.yml
-├── README.md
-├── macros/
-│   ├── pps_generate_window_offsets.sql   
-│   ├── pps_linear_slope.sql              
-│   └── pps_distance_penalty.sql          
-├── models/
-│   └── pre_period_selector/
-│       ├── schema.yml
-│       ├── int_pps_candidate_windows.sql
-│       ├── int_pps_diff_correlations.sql
-│       ├── int_pps_gap_slopes.sql
-│       ├── int_pps_distance_scores.sql
-│       └── pps_recommendations.sql        
-├── tests/
-│   └── generic/
-│       ├── assert_weights_sum_to_one.sql
-│       └── assert_top_n_returned.sql
-└── integration_tests/
-    ├── dbt_project.yml
-    ├── seeds/
-    │   └── pps_sample_daily_metric.csv
-    └── models/
-        └── stg_pps_sample_metric.sql
-</pre>
-
-
 ## Installation
 
-In dbt `packages.yml`, add:
+In dbt `packages.yml`, add the package and run `dbt deps`:
 
 ```yaml
 packages:
   - git: "https://github.com/bchaoss/dbt-did-pre-period-selector"
     revision: 0.1.0
-```
-
-and run:
-
-```bash
-dbt deps
 ```
 
 ## Usage
@@ -100,8 +63,8 @@ The package expects a staging model with these columns:
 | `date` | date | ✓ | One row per day |
 | `treated_value` | numeric | ✓ | Metric for the treated group |
 | `control_value` | numeric | ✓ | Metric for the control group |
-| `is_holiday` | boolean | ✓ | Set to `false` if not applicable |
-| `is_event` | boolean | ✓ | Set to `false` if not applicable |
+| `is_holiday` | boolean | Optional | Set to `false` if not applicable |
+| `is_event` | boolean | Optional | Set to `false` if not applicable |
 
 Minimal example:
 ```sql
@@ -110,8 +73,8 @@ SELECT
     date             AS date,
     metric_treated   AS treated_value,
     metric_control   AS control_value,
-    false,           AS is_holiday,
-    false            AS is_event
+    -- false,           AS is_holiday,
+    -- false            AS is_event
 FROM {{ ref('your_source') }}
 ```
 
@@ -124,13 +87,26 @@ dbt run  --select pre_period_selector
 dbt test --select pre_period_selector
 ```
 
-Query the output:
+Query the output `pps_recommendations`:
 
 ```sql
 SELECT * FROM pps_recommendations ORDER BY recommendation_rank;
 ```
 
 Pick the highest rank with no flags raised. 
+
+### Using Custom Ranking Logic
+
+`pps_scored_windows` exposes all intermediate scores without applying any
+ranking. If the default composite score does not fit your use case, query
+`pps_scored_windows` directly and apply your own weights or filters:
+```sql
+SELECT *
+FROM pps_scored_windows
+WHERE flag_low_correlation IS NULL
+ORDER BY diff_corr DESC
+LIMIT 3
+```
 
 ### Multiple Control Groups
 
@@ -168,3 +144,35 @@ All variables have defaults and can be overridden in `dbt_project.yml`:
 | `pps_slope_warning_threshold` | 0.05 | Slope above this triggers `flag_unstable_gap` |
 
 *Weights must sum to 1.0 — enforced at compile time.
+
+
+## Structure
+
+<pre>
+dbt_did_pre_period_selector/
+├── dbt_project.yml
+├── README.md
+├── macros/
+│   ├── pps_generate_window_offsets.sql   
+│   ├── pps_linear_slope.sql              
+│   └── pps_distance_penalty.sql       
+│   └── pps_assert_weights_sum_to_one.sql   
+├── models/
+│   └── pre_period_selector/
+│       ├── schema.yml
+│       ├── int_pps_candidate_windows.sql
+│       ├── int_pps_diff_correlations.sql
+│       ├── int_pps_gap_slopes.sql
+│       ├── int_pps_distance_scores.sql
+│       ├── pps_scored_windows.sql
+│       └── pps_recommendations.sql        
+├── tests/
+│   └── generic/
+│       ├── assert_no_date_gaps.sql
+│       ├── assert_recommendations_not_empty.sql
+│       └── assert_top_n_returned.sql
+└── integration_tests/
+    ├── dbt_project.yml
+    ├── seeds/pps_sample_daily_metric.csv
+    └── models/stg_pps_sample_metric.sql
+</pre>
