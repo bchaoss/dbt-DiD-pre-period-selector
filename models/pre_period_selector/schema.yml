@@ -2,7 +2,9 @@ version: 2
 
 models:
   - name: int_pps_candidate_windows
-    description: "Candidate pre-period windows after gap_days filtering"
+    description: >
+      Sliding pre-period candidate windows. 
+      Gap days filtered to [pps_gap_min_days, pps_gap_max_days].
     columns:
       - name: window_id
         tests: [not_null, unique]
@@ -14,37 +16,126 @@ models:
         tests:
           - not_null
           - dbt_utils.accepted_range:
-              min_value: "var('pps_gap_min_days')"
-              max_value: "var('pps_gap_max_days')"
+              arguments:
+                min_value: "{{ var('pps_gap_min_days') }}"
+                max_value: "var('pps_gap_max_days')"
+
+  - name: int_pps_input_metric
+    description: >
+      Validated and normalised view of pps_metric_model. 
+      Ensures required columns exist and defaults is_holiday and is_event to false if absent.
+    columns:
+      - name: date
+        tests: [not_null, unique]
+      - name: treated_value
+        tests: [not_null]
+      - name: control_value
+        tests: [not_null]
+      - name: is_holiday
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+      - name: is_event
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+    tests:
+      - assert_no_date_gaps:
+          name: metric_input_has_missing_dates_scoring_may_be_affected
+          date_col: date
+          config:
+            severity: warn
 
   - name: int_pps_diff_correlations
-    description: "Differenced correlation coefficient for each candidate window"
+    description: >
+      Differenced correlation coefficient per candidate window. 
+      Measures day-over-day co-movement between treated and control, excluding holidays and events.
+    columns:
+      - name: window_id
+        tests: [not_null, unique]
+      - name: diff_corr
+        description: >
+          Pearson correlation of day-over-day differences between treated and control. 
+          Higher is better. Negative values are excluded."
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0.0
+                max_value: 1.0
+                inclusive: true
+
+  - name: int_pps_gap_slopes
+    description: >
+      OLS slope of treated-minus-control gap over the period between pre_end and post_start. 
+      Near-zero slope indicates a stable gap leading into the experiment.
+    columns:
+      - name: window_id
+        tests: [not_null, unique]
+      - name: gap_slope
+        description: >
+          OLS slope of the treated-control gap over the gap period. 
+          Values near zero indicate a stable baseline.
+        tests: [not_null]
+
+  - name: pps_scored_windows
+    description: >
+      All candidate windows that passed pps_corr_min_threshold, with all
+      intermediate scores exposed. Use this model to build custom ranking
+      logic instead of relying on the default composite_score in
+      pps_recommendations.
     columns:
       - name: window_id
         tests: [not_null, unique]
       - name: diff_corr
         tests:
+          - not_null
           - dbt_utils.accepted_range:
-              min_value: -1.0
-              max_value: 1.0
-              inclusive: true
+              arguments:
+                min_value: 0.0
+                max_value: 1.0
 
-  - name: pps_recommendations
-    description: |
-      Final top-N recommended pre-period windows.
-      Run before each experiment starts. Pick rank=1 where no flags are raised.
-    columns:
-      - name: recommendation_rank
-        tests: [not_null, unique]
-      - name: pre_start
-        tests: [not_null]
       - name: composite_score
+        description: "Weighted sum of diff_corr, distance_score, and gap_stability_score by default. Range 0-1."
         tests:
           - not_null
           - dbt_utils.accepted_range:
-              min_value: 0.0
-              max_value: 1.0
+              arguments:
+                min_value: 0.0
+                max_value: 1.0
+
+      - name: flag_low_correlation
+        description: "True if diff_corr is below pps_corr_warning_threshold. Visual inspection recommended."
+
+      - name: flag_unstable_gap
+        description: "True if abs(gap_slope) exceeds pps_slope_warning_threshold."
+
+      - name: flag_low_obs_count
+        description: "True if fewer than 14 non-holiday observations exist in the candidate window."
+
+
+  - name: pps_recommendations
+    description: |
+      Top-N recommended pre-period windows ranked by composite score.
+      Pick rank=1 where no flags are raised.
+    columns:
+      - name: recommendation_rank
+        tests: [not_null, unique]
+
+      - name: pre_start
+        tests: [not_null]
+
+      - name: composite_score
+        tests: [not_null]     
+
     tests:
-      - assert_top_n_returned:   # self-defined generic test
-          n_col: recommendation_rank
-          expected_max: "var('pps_top_n')"
+      - assert_top_n_returned: 
+          arguments:
+            n_col: recommendation_rank
+            expected_max: "var('pps_top_n')"
+
+      - assert_recommendations_not_empty

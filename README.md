@@ -2,10 +2,10 @@
 
 ## What This Package Does
 
-Selecting a pre-treatment period for Difference-in-Differences (DiD) is typically done
-manually. 
+Selecting a pre-period for Difference-in-Differences (DiD) is typically done
+manually and subjectively. 
 This `dbt` package **automates the selection by scoring candidate
-historical windows** against three criteria in SQL: 
+historical windows** against three criteria in `SQL`: 
 - how closely treated and control co-move
 (differenced correlation);
 - how stable the gap between them is leading into the
@@ -14,11 +14,11 @@ experiment (gap slope);
 (distance penalty).
 
 Given a *metric table* and an *experiment start date*, it returns the **top-N recommended
-pre-treatment periods**, with ranked scores and quality flags for human review.
+pre-periods**, with ranked scores and quality flags for human review.
 
 ## Design Philosophy
 
-The package aims the **window selection problem** for pre-treatment period in DiD, instead of pre-trends hypothesis testing problem.
+The package aims the **window selection problem** for pre-period in DiD, instead of pre-trends hypothesis testing problem.
 
 The treated and control groups are assumed and already defined by the
 analyst, for examples: YoY
@@ -32,22 +32,11 @@ to settings where a test result determines whether analysis proceeds. Here, a wi
 is always selected. The package finds the best available one and flags its
 weaknesses transparently.
 
-For the full theoretical references and known limitations, see [background.md](background.md).
-
+For the full theoretical references and known limitations, see [DESIGN.md](DESIGN.md).
 
 ## Installation
 
-dbt version required: `>=1.3.0, <2.0.0`
-
-Include the following in dbt `packages.yml` file:
-
-```yaml
-packages:
-  - package: bchaoss/dbt-did-pre-period-selector
-    revision: 0.1.0
-```
-
-Or
+In dbt `packages.yml`, add the package and run `dbt deps`:
 
 ```yaml
 packages:
@@ -55,22 +44,17 @@ packages:
     revision: 0.1.0
 ```
 
-Run `dbt deps` to install the package.
-
-For more information on using packages in your dbt project, check out the [dbt Documentation](https://docs.getdbt.com/docs/package-management).
-
-
 ## Usage
 
 Set the two required variables in `dbt_project.yml`:
 
 ```yaml
 vars:
-  pps_post_start_date: '2024-06-01'                # experiment start date
-  pps_metric_relation: 'stg_my_experiment_metric'  # input model name
+  pps_post_start_date: '2024-06-01'
+  pps_metric_model: 'stg_my_experiment_metric'
 ```
 
-### Input model interface
+### Staging model interface
 
 The package expects a staging model with these columns:
 
@@ -79,26 +63,20 @@ The package expects a staging model with these columns:
 | `date` | date | ✓ | One row per day |
 | `treated_value` | numeric | ✓ | Metric for the treated group |
 | `control_value` | numeric | ✓ | Metric for the control group |
-| `is_holiday` | boolean | ✓ | Set to `false` if not applicable |
-| `is_event` | boolean | ✓ | Set to `false` if not applicable |
+| `is_holiday` | boolean | Optional | Set to `false` if not applicable |
+| `is_event` | boolean | Optional | Set to `false` if not applicable |
 
-#### Minimal example:
+Minimal example:
 ```sql
 -- stg_my_experiment_metric.sql
 SELECT
     date             AS date,
     metric_treated   AS treated_value,
     metric_control   AS control_value,
-    false,           AS is_holiday,
-    false            AS is_event
+    -- false,           AS is_holiday,
+    -- false            AS is_event
 FROM {{ ref('your_source') }}
 ```
-
-#### Multiple Control Groups
-
-If have more than one control group, aggregate them in the staging model
-before passing to the package. The package expects a single `control_value` column.
-
 
 ### Running the package
 
@@ -109,51 +87,44 @@ dbt run  --select pre_period_selector
 dbt test --select pre_period_selector
 ```
 
-Query the output:
+Query the output `pps_recommendations`:
 
 ```sql
 SELECT * FROM pps_recommendations ORDER BY recommendation_rank;
 ```
 
-Pick the highest rank with no flags raised for further review (visual check, placebo test, etc.). 
+Pick the highest rank with no flags raised. 
 
+### Using Custom Ranking Logic
 
-## Structure
+`pps_scored_windows` exposes all intermediate scores without applying any
+ranking. If the default composite score does not fit your use case, query
+`pps_scored_windows` directly and apply your own weights or filters:
+```sql
+SELECT *
+FROM pps_scored_windows
+WHERE flag_low_correlation IS NULL
+ORDER BY diff_corr DESC
+LIMIT 3
+```
 
-<pre>
-dbt_did_pre_period_selector/
-├── dbt_project.yml
-├── README.md
-├── macros/
-│   ├── pps_assert_weights_sum_to_one.sql
-│   ├── pps_generate_window_offsets.sql   
-│   ├── pps_linear_slope.sql              
-│   └── pps_distance_penalty.sql          
-├── models/
-│   └── pre_period_selector/
-│       ├── schema.yml
-│       ├── int_pps_candidate_windows.sql
-│       ├── int_pps_diff_correlations.sql
-│       ├── int_pps_gap_slopes.sql
-│       ├── int_pps_distance_scores.sql
-│       └── pps_recommendations.sql        
-├── tests/
-│   └── generic/
-│       └── assert_top_n_returned.sql
-└── integration_tests/
-    ├── dbt_project.yml
-    ├── seeds/
-    │   └── pps_sample_daily_metric.csv
-    └── models/
-        └── stg_pps_sample_metric.sql
-</pre>
+### Multiple Control Groups
 
+If have more than one control group, aggregate them in the staging model
+before passing to the package. The package expects a single `control_value` column.
+
+For example:
+```sql
+-- stg_my_experiment_metric.sql
+SELECT
+    date,
+    treated_value,
+    (control_a + control_b + control_c) / 3.0 AS control_value,
+    is_holiday
+FROM {{ ref('your_source') }}
+```
 
 ## Configuration
-
-**Compatibility**: Tested on Postgres. Compatible with Snowflake, BigQuery, Redshift, and DuckDB
-via dbt's cross-database macros (`dbt.dateadd`, `dbt.datediff`).
-
 
 All variables have defaults and can be overridden in `dbt_project.yml`:
 
@@ -173,3 +144,35 @@ All variables have defaults and can be overridden in `dbt_project.yml`:
 | `pps_slope_warning_threshold` | 0.05 | Slope above this triggers `flag_unstable_gap` |
 
 *Weights must sum to 1.0 — enforced at compile time.
+
+
+## Structure
+
+<pre>
+dbt_did_pre_period_selector/
+├── dbt_project.yml
+├── README.md
+├── macros/
+│   ├── pps_generate_window_offsets.sql   
+│   ├── pps_linear_slope.sql              
+│   └── pps_distance_penalty.sql       
+│   └── pps_assert_weights_sum_to_one.sql   
+├── models/
+│   └── pre_period_selector/
+│       ├── schema.yml
+│       ├── int_pps_candidate_windows.sql
+│       ├── int_pps_diff_correlations.sql
+│       ├── int_pps_gap_slopes.sql
+│       ├── int_pps_distance_scores.sql
+│       ├── pps_scored_windows.sql
+│       └── pps_recommendations.sql        
+├── tests/
+│   └── generic/
+│       ├── assert_no_date_gaps.sql
+│       ├── assert_recommendations_not_empty.sql
+│       └── assert_top_n_returned.sql
+└── integration_tests/
+    ├── dbt_project.yml
+    ├── seeds/pps_sample_daily_metric.csv
+    └── models/stg_pps_sample_metric.sql
+</pre>

@@ -1,3 +1,5 @@
+from pathlib import Path
+import re
 import csv
 import math
 import random
@@ -55,3 +57,17 @@ with open("/workspace/integration_tests/seeds/pps_sample_daily_metric.csv", "w",
     writer.writerows(rows)
 
 print(f"Rows: {len(rows)}")
+
+
+# ------- auto-sync pps_post_start_date in dbt_project.yml --------------
+
+yml_path = Path(__file__).parent.parent / "dbt_project.yml"
+yml = yml_path.read_text()
+yml = re.sub(
+    r"pps_post_start_date: '.*'",
+    f"pps_post_start_date: '{post_start_date}'",
+    yml
+)
+yml_path.write_text(yml)
+print(
+    f"Updated dbt_project.yml: pps_post_start_date set to '{post_start_date}'")

@@ -25,6 +25,7 @@ dbt show --select pps_recommendations --output json
 Or
 
 ```bash
+cd integration_tests
 bash test.sh
 ```
 

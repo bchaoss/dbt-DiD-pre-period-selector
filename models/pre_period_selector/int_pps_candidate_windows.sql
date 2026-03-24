@@ -12,6 +12,9 @@
 {%- endif -%}
 
 {% set num_candidates = (var('pps_gap_max_days') / var('pps_slide_interval_days')) | int + 1 %}
+{% if num_candidates > var('pps_max_candidates') %}
+  {{ log("pps warning: " ~ num_candidates ~ " candidate windows will be generated. Consider increasing pps_slide_interval_days to reduce query complexity.", info=True) }}
+{% endif %}
 
 WITH offsets AS (
   {{ pps_generate_window_offsets(num_candidates) }}

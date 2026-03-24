@@ -1,4 +1,4 @@
-name: 'dbt_pre_period_selector'
+name: 'pre_period_selector'
 version: '0.1.0'
 config-version: 2
 
@@ -20,14 +20,18 @@ models:
 
 vars:
   # ---- Required ----
-  pps_metric_relation: null           # example: ref('your_daily_metric')
-  pps_post_start_date: null           # example: '2024-04-01'
+  pps_metric_model: null           # example: 'your_daily_metric'
+  pps_post_start_date: null        # example: '2024-04-01'
 
   # ---- Window parameters ----
   pps_pre_window_days: 28
   pps_slide_interval_days: 7
   pps_gap_min_days: 7
   pps_gap_max_days: 90
+  pps_max_candidates: 50
+
+  # ---- Scoring parameters ----
+  pps_diff_lag: 1                  # set to 7 when eliminate weekly seasonality
 
   # ---- Scoring weights ----
   pps_weight_correlation: 0.6
@@ -41,4 +45,5 @@ vars:
   # ---- Output and warning thresholds ----
   pps_top_n: 3
   pps_corr_warning_threshold: 0.85
+  pps_corr_min_threshold: 0.0
   pps_slope_warning_threshold: 0.05
